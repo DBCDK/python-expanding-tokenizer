@@ -1,0 +1,50 @@
+This is designed for easy parsing of config-files.
+
+
+  * It allows for variable expansion and simple math.
+  * The variables can be provided from other things than environment
+  * Math is limited basic integer arithmetic
+  * Math is extended with '>' and '<' which means max/min of the two values
+  * Expansion Types
+    * $VARNAME => simple expansion
+    * ${VARNAME:modifier,modifier|default value}
+      * modifiers and default value are optional
+      * known modifiers:
+        * ms/s - produces a number of (milli)seconds from a timespec ala. 4h
+        * xml - escapes value as an xml value ie. <tag>${NAME_AND_EMAIL:xml}</tag>
+        * attr - escapes value as an xml attr ie. <tag prop="${REALNAME:attr}">
+        * uri - escapes value for use as uri argument ie. ?value=${VALUE:uri}&key=...
+        * sql - string quoting of ' ie. "column = '${V:sql}'"
+      * default value is variable expanded ie. ${A|${B}} gives $B is $A is unset
+      * if a variable is unresolved and no default values is given an error is raised
+    * $( Math-expression )
+      * operators are + - * / % < (min of the two sides) > (max of the two sides)
+      * Variables should expand to a integer value ie. $(2 * (1 + $V)) - $V should give an integer
+  * Text token types:
+    * '...''...' (sql escape) gives TEXT without variable expansion
+    * "...\"\$.$NAME..." (backslash escape) gives TEXT with variable expansion
+    * ${NAME} gives TEXT variable content
+    * TokenType.WORD is TEXT without whitespace
+    * TokenType.NUMBER is TEXT thet resolves to an octal, decimal or hex number
+
+
+Usage example:
+--------8<--------
+from expanding.tokenizer import *
+
+
+tokenizer = Tokenizer.ini_from_file("config.ini")
+
+while not tokenizer.tokens_are(TokenType.EOF):
+    output = []
+    if tokenizer.tokens_are(TokenType.NEWLINE, output=output):
+        pass
+    elif tokenizer.tokens_are(TokenType.SECTION, TokenType.EOL, output=output):
+        print("got section:", output[0].content())
+    elif tokenizer.tokens_are(TokenType.WORD, TokenType.EQ, TokenType.TEXT, TokenType.EOL, output=output):
+        print("got assignment:", output[0].content(), output[2].content())
+    else:
+        raise Exception("Got unknown token: " + tokenizer.peek_token().content())
+--------8<--------
+
+Contact author at https://github.com/kosmisk-dk/
