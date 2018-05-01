@@ -78,6 +78,11 @@ Supports following expansions:
         return value
 
     def _process_variable(self) -> (_str, _str):
+        """
+        Read a variable form source
+
+        :return:tuple of variable name and value
+        """
         name = self._variable.get_name(self._reader)
         value = None
         if name is not None:
@@ -85,45 +90,57 @@ Supports following expansions:
         return name, value
 
     @staticmethod
-    def _fail_variable(at, name, value):
+    def _fail_variable(at, name, value) -> None:
+        """
+        Fail if variable cannot be resolved
+
+        :param at: location
+        :param name: tuple from _process_variable
+        :param value: tuple from _process_variable
+        """
         if name is None:
             raise Exception("Cannot find variable name at: %s" % at)
         if value is None:
             raise Exception("Cannot resolve variable: %s at: %s" % (name, at))
 
     @staticmethod
-    def to_milliseconds(string, location) -> str:
-        """Convert a string to a number of milliseconds as string
+    def to_milliseconds(string, at) -> str:
+        """
+        Convert a string to a number of milliseconds as string
 
-        Parameters
-        ----------
-        string : text containing a number and optionalt a duration
-                 this duration is d/h/m/s/ms
-        location : Input object with the location of the source
+        :param string: text containing a number and optional a duration
+                       this duration is d/h/m/s/ms
+        :param at : Input object with the location of the source
         """
         match = Expansion.TO_MILLISECONDS.match(string)
         if match is None:
-            raise Exception("%s is not a duration at: %s" % (string, location))
+            raise Exception("%s is not a duration at: %s" % (string, at))
         ms_pr_unit = Expansion.TO_MILLISECONDS_SCALE[match.group(2)]
         return str(int(match.group(1)) * ms_pr_unit)
 
     @staticmethod
-    def to_seconds(string, location) -> str:
-        """Convert a string to a number of seconds as string
+    def to_seconds(string, at) -> str:
+        """
+        Convert a string to a number of seconds as string
 
-        Parameters
-        ----------
-        string : text containing a number and optionalt a duration
-                 this duration is d/h/m/s
-        location : Input object with the location of the source
+        :param string: text containing a number and optional a duration
+                       this duration is d/h/m/s
+        :param at: Input object with the location of the source
         """
         match = Expansion.TO_SECONDS.match(string)
         if match is None:
-            raise Exception("%s is not a duration at: %s" % (string, location))
+            raise Exception("%s is not a duration at: %s" % (string, at))
         ms_pr_unit = Expansion.TO_SECONDS_SCALE[match.group(2)]
         return str(int(match.group(1)) * ms_pr_unit)
 
     def _expand_variable(self, at: At, should_resolve: bool) -> str:
+        """
+        expand ${} construction
+
+        :param at: location of $
+        :param should_resolve: if a result is required
+        :return: expanded text
+        """
         (name, value) = self._process_variable()
         at_after = self._reader.at()
         c = self._reader.get()
@@ -162,6 +179,12 @@ Supports following expansions:
             return ""
 
     def _process_until_closing_bracket(self, should_resolve) -> str:
+        """
+        Expand text (default value) up until closing bracket
+
+        :param should_resolve: if nested expansions should resolve
+        :return: expanded content
+        """
         at = self._reader.at()
         content = StringIO()
         while True:
@@ -179,6 +202,13 @@ Supports following expansions:
                 content.write(c)
 
     def _expand_math(self, at: At, should_resolve: bool) -> str:
+        """
+        expand $() construction
+
+        :param at: location of $
+        :param should_resolve: if a result is required
+        :return: expanded text
+       """
         self._tokenizer = MathTokenizer(at, self._reader, self, should_resolve)
         tree = self._process_to_closing_parenthesis()
         if should_resolve:
@@ -187,6 +217,10 @@ Supports following expansions:
             return ""
 
     def _process_to_closing_parenthesis(self) -> MathTree:
+        """
+        Build a math tree up until the matching closing parenthesis
+        :return: Math Tree
+        """
         operators = []
         values = []
         while True:
