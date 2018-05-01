@@ -1,7 +1,7 @@
 from io import StringIO
 from unittest import TestCase
 
-from expanding.expand import Expanding
+from expanding.expand import Expansion
 from expanding.source import Reader, At
 from expanding.variable import EnvironmentVariable
 
@@ -9,7 +9,7 @@ from expanding.variable import EnvironmentVariable
 def make_expanding(text, **kwargs):
     reader = Reader(StringIO(text))
     variable = EnvironmentVariable(kwargs)
-    expanding = Expanding(reader, variable)
+    expanding = Expansion(reader, variable)
     return expanding
 
 

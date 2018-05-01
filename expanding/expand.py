@@ -11,10 +11,18 @@ from expanding.variable import EnvironmentVariable
 _str = TypeVar('_str', str, None)
 
 
-class Expanding(object):
+class Expansion(object):
+    """
+Dollar-expansion
+
+Supports following expansions:
+ * $VARIABLE
+ * ${VARIABLE[:quote[,quote...][|default value]}
+ * $( integer expression )
+"""
     DEFAULT_QUOTES = {
-        'ms': lambda s, at: Expanding.to_milliseconds(s, at),
-        's': lambda s, at: Expanding.to_seconds(s, at),
+        'ms': lambda s, at: Expansion.to_milliseconds(s, at),
+        's': lambda s, at: Expansion.to_seconds(s, at),
         'xml': lambda s, at: saxutils.escape(s),
         'attr': lambda s, at: saxutils.escape(s, {'"': '&quot;'}),
         'uri': lambda s, at: urllib.parse.quote_plus(s.encode('utf-8')),
@@ -26,27 +34,50 @@ class Expanding(object):
     TO_SECONDS_SCALE = {'': 1, 's': 1, 'm': 60, 'h': 3600, 'd': 86400}
 
     def __init__(self, reader, variable=EnvironmentVariable(), quotes=DEFAULT_QUOTES):
+        """
+        Constructor with sane defaults
+
+        :param reader: input source
+        :param variable: Object that can read variable names from a reader, and resolve variables
+        :param quotes: map of quotes @see add_quote()
+        """
         self._reader = reader
         self._variable = variable
         self.quotes = quotes
 
-    def add_quote(self, name, func) -> TypeVar('Expanding'):
+    def add_quote(self, name, func) -> TypeVar('Expansion'):
+        """
+        Add a new type of quotation
+
+        :param name: name of quotation
+        :param func: function that takes string and At object returning the quoted text
+        :return: self for chaining
+        """
         self.quotes[name] = func
         return self
 
     def expand(self, at, should_resolve=True) -> str:
+        """
+        Expand a $-expression
+
+        reader should be positioned after $
+
+        :param at: location if $ for error reporting
+        :param should_resolve: if it is required to resolve
+        :return: expanded text
+        """
         c = self._reader.get()
         if c is '{':
-            return _ExpandVariable(at, self._reader, self, should_resolve).content()
+            return self._expand_variable(at, should_resolve)
         if c is '(':
-            return _ExpandMath(at, self._reader, self, should_resolve).content()
+            return self._expand_math(at, should_resolve)
         self._reader.unget()
-        (name, value) = self.process_variable()
+        (name, value) = self._process_variable()
         if should_resolve:
-            self.fail_variable(at, name, value)
+            self._fail_variable(at, name, value)
         return value
 
-    def process_variable(self) -> (_str, _str):
+    def _process_variable(self) -> (_str, _str):
         name = self._variable.get_name(self._reader)
         value = None
         if name is not None:
@@ -54,13 +85,83 @@ class Expanding(object):
         return name, value
 
     @staticmethod
-    def fail_variable(at, name, value):
+    def _fail_variable(at, name, value):
         if name is None:
             raise Exception("Cannot find variable name at: %s" % at)
         if value is None:
             raise Exception("Cannot resolve variable: %s at: %s" % (name, at))
 
-    def process_until_closing_bracket(self, should_resolve) -> str:
+    @staticmethod
+    def to_milliseconds(string, location) -> str:
+        """Convert a string to a number of milliseconds as string
+
+        Parameters
+        ----------
+        string : text containing a number and optionalt a duration
+                 this duration is d/h/m/s/ms
+        location : Input object with the location of the source
+        """
+        match = Expansion.TO_MILLISECONDS.match(string)
+        if match is None:
+            raise Exception("%s is not a duration at: %s" % (string, location))
+        ms_pr_unit = Expansion.TO_MILLISECONDS_SCALE[match.group(2)]
+        return str(int(match.group(1)) * ms_pr_unit)
+
+    @staticmethod
+    def to_seconds(string, location) -> str:
+        """Convert a string to a number of seconds as string
+
+        Parameters
+        ----------
+        string : text containing a number and optionalt a duration
+                 this duration is d/h/m/s
+        location : Input object with the location of the source
+        """
+        match = Expansion.TO_SECONDS.match(string)
+        if match is None:
+            raise Exception("%s is not a duration at: %s" % (string, location))
+        ms_pr_unit = Expansion.TO_SECONDS_SCALE[match.group(2)]
+        return str(int(match.group(1)) * ms_pr_unit)
+
+    def _expand_variable(self, at: At, should_resolve: bool) -> str:
+        (name, value) = self._process_variable()
+        at_after = self._reader.at()
+        c = self._reader.get()
+        quotes = []
+        if c is ':':
+            c = ','
+            while c is ',':
+                at_quote = self._reader.at()
+                quote = StringIO()
+                c = self._reader.get()
+                while str.isalnum(c):
+                    quote.write(c)
+                    c = self._reader.get()
+                quote = quote.getvalue()
+                if quote not in self.quotes:
+                    raise Exception("Unknown quote: '%s' at: %s" % (quote, at_quote))
+                quotes.append(quote)
+
+        if c is '|':
+            default_value = self._process_until_closing_bracket(should_resolve and value is None)
+        else:
+            if c is None:
+                raise Exception("Unexpected EOF in variable: %s at: %s" % (name, at))
+            if c is not '}':
+                raise Exception("Expected '}' in variable: %s at: %s got %s" % (name, at_after, c))
+            if should_resolve:
+                self._fail_variable(at, name, value)
+        if should_resolve:
+            if value is not None:
+                for quote in quotes:
+                    value = self.quotes[quote](value, at)
+                return value
+            else:
+                return default_value
+        else:
+            return ""
+
+    def _process_until_closing_bracket(self, should_resolve) -> str:
         at = self._reader.at()
         content = StringIO()
         while True:
@@ -77,102 +178,15 @@ class Expanding(object):
             if c is not None:
                 content.write(c)
 
-    @staticmethod
-    def to_milliseconds(string, location) -> str:
-        """Convert a string to a number of milliseconds as string
-
-        Parameters
-        ----------
-        string : text containing a number and optionalt a duration
-                 this duration is d/h/m/s/ms
-        location : Input object with the location of the source
-        """
-        match = Expanding.TO_MILLISECONDS.match(string)
-        if match is None:
-            raise Exception("%s is not a duration at: %s" % (string, location))
-        ms_pr_unit = Expanding.TO_MILLISECONDS_SCALE[match.group(2)]
-        return str(int(match.group(1)) * ms_pr_unit)
-
-    @staticmethod
-    def to_seconds(string, location) -> str:
-        """Convert a string to a number of seconds as string
-
-        Parameters
-        ----------
-        string : text containing a number and optionalt a duration
-                 this duration is d/h/m/s
-        location : Input object with the location of the source
-        """
-        match = Expanding.TO_SECONDS.match(string)
-        if match is None:
-            raise Exception("%s is not a duration at: %s" % (string, location))
-        ms_pr_unit = Expanding.TO_SECONDS_SCALE[match.group(2)]
-        return str(int(match.group(1)) * ms_pr_unit)
-
-
-class _Expand(object):
-
-    def content(self) -> str:
-        raise NotImplemented()
-
-
-class _ExpandVariable(_Expand):
-    def __init__(self, at: At, reader: Reader, expanding: Expanding, should_resolve: bool) -> object:
-        (name, value) = expanding.process_variable()
-        at_after = reader.at()
-        c = reader.get()
-        quotes = []
-        if c is ':':
-            c = ','
-            while c is ',':
-                at_quote = reader.at()
-                quote = StringIO()
-                c = reader.get()
-                while str.isalnum(c):
-                    quote.write(c)
-                    c = reader.get()
-                quote = quote.getvalue()
-                if not quote in expanding.quotes:
-                    raise Exception("Unknown quote: '%s' at: %s" % (quote, at_quote))
-                quotes.append(quote)
-
-        if c is '|':
-            default_value = expanding.process_until_closing_bracket(should_resolve and value is None)
-        else:
-            if c is None:
-                raise Exception("Unexpected EOF in variable: %s at: %s" % (name, at))
-            if c is not '}':
-                raise Exception("Expected '}' in variable: %s at: %s got %s" % (name, at_after, c))
-            if should_resolve:
-                expanding.fail_variable(at, name, value)
+    def _expand_math(self, at: At, should_resolve: bool) -> str:
+        self._tokenizer = MathTokenizer(at, self._reader, self, should_resolve)
+        tree = self._process_to_closing_parenthesis()
         if should_resolve:
-            if value is not None:
-                for quote in quotes:
-                    value = expanding.quotes[quote](value, at)
-                self._content = value
-            else:
-                self._content = default_value
+            return str(tree.get_value())
         else:
-            self._content = ""
+            return ""
 
-    def content(self) -> str:
-        return self._content
-
-
-class _ExpandMath(_Expand):
-
-    def __init__(self, at: At, reader: Reader, expanding: Expanding, should_resolve: bool) -> object:
-        self._tokenizer = MathTokenizer(at, reader, expanding, should_resolve)
-        tree = self._process_to_closing()
-        if should_resolve:
-            self._content = str(tree.get_value())
-        else:
-            self._content = ""
-
-    def content(self) -> str:
-        return self._content
-
-    def _process_to_closing(self) -> MathTree:
+    def _process_to_closing_parenthesis(self) -> MathTree:
         operators = []
         values = []
         while True:
@@ -182,7 +196,7 @@ class _ExpandMath(_Expand):
                 neg = not neg
                 token = self._tokenizer.token()
             if token.is_a(MathType.LPAR):
-                tree = self._process_to_closing()
+                tree = self._process_to_closing_parenthesis()
             elif token.is_a(MathType.NUMBER):
                 tree = MathValue(token.content())
             else:

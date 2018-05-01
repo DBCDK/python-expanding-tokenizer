@@ -1,7 +1,7 @@
 from io import StringIO
 from unittest import TestCase
 
-from expanding.expand import Expanding
+from expanding.expand import Expansion
 from expanding.math import MathTokenizer, MathType
 from expanding.source import Reader, At
 from expanding.variable import EnvironmentVariable
@@ -10,7 +10,7 @@ from expanding.variable import EnvironmentVariable
 def make_tokenizer(text, should_resolve=True, **kwargs):
     reader = Reader(StringIO(text))
     variable = EnvironmentVariable(kwargs)
-    expanding = Expanding(reader, variable)
+    expanding = Expansion(reader, variable)
     tokenizer = MathTokenizer(At("", -1, -1), reader, expanding, should_resolve)
     return tokenizer
 
