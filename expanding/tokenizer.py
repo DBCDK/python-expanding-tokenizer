@@ -172,7 +172,7 @@ Primary purpose of this package is
         """
         with open(filename, 'r') as f:
             content = f.read()
-            reader = Reader(source=StringIO(content), source_name=filename)
+            reader = Reader(source=StringIO(content), name=filename)
             return Tokenizer(reader=reader, variable=EnvironmentVariable(), whitespace=TokenWhitespace.NEWLINE, single_tokens="=")
 
     @staticmethod
@@ -187,7 +187,7 @@ Primary purpose of this package is
         """
         with open(filename, 'r') as f:
             content = f.read()
-            reader = Reader(source=StringIO(content), source_name=filename)
+            reader = Reader(source=StringIO(content), name=filename)
             return Tokenizer(reader=reader, variable=EnvironmentVariable(), whitespace=TokenWhitespace.BOTH,
                              single_tokens="".join(Tokenizer._SINGLE_CHARACTER_TOKENS.keys()))
 
