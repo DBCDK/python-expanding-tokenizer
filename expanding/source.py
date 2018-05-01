@@ -89,9 +89,9 @@ class Reader(object):
         """
         Read a backquoted value from  input
 
-        typical \\ \r \t \n \octal \uhex or $
+        typical \\ r t n {octal} u{hex} or $
         :return: character
-        :raises: Exception if  EOF is encountered
+        :raises: Exception if EOF is encountered
         """
         c = self.get()
         if c is None:
