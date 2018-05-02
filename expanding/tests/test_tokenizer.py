@@ -117,4 +117,9 @@ class TestTokenizer(TestCase):
         self.assertEqual("foo", output[0].content())
         self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL, TokenType.ANY_WHITESPACE, TokenType.TEXT, TokenType.EOF))
 
+    def test_one_of_matching(self):
+        tzr = Tokenizer(Reader(StringIO(" foo ( bar  ")), single_tokens="{}[]()")
+        output = []
+        self.assertTrue(tzr.tokens_are(TokenType.WORD, [TokenType.LBRACE, TokenType.LBRACKET, TokenType.LPARENT], TokenType.WORD, output=output))
+        self.assertTrue(output[1].is_a(TokenType.LPARENT))
 

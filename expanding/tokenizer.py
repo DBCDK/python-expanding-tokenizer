@@ -116,9 +116,9 @@ Also has matchers for token types
         if wanted_type is TokenType.EOL:
             return self._token_type is TokenType.NEWLINE or self._token_type is TokenType.EOF
         if wanted_type is TokenType.NUMBER:
-            return self._IS_NUMBER.match(self._content) is not None
+            return self._token_type is TokenType.TEXT and self._IS_NUMBER.match(self._content) is not None
         if wanted_type is TokenType.WORD:
-            return self._IS_WORD.match(self._content) is not None
+            return self._token_type is TokenType.TEXT and self._IS_WORD.match(self._content) is not None
         return wanted_type is self._token_type
 
     def __str__(self):
@@ -228,35 +228,42 @@ Primary purpose of this package is
             self._next_token()
         return self._tokens[0]
 
-    def tokens_are(self, *args: TokenType, output: List[Token] = []) -> List[Token]:
+    def tokens_are(self, *args: TypeVar('_TokenType', TokenType, List[TokenType]), output: List[Token] = []) -> List[Token]:
         """
         Match the inut for a list of tokens.
 
-        :param args: list of tokentypes to match
+        :param args: list of token types elements to match
+                     element is optionally a list of token types where at least one should match
         :param output: where to put the matched token
                        (only put is entire token list matches)
         :returns: sane as output or None if no match is made
         """
         taken = []
         i = 0
-        argi = iter(args)
-        try:
-            while True:
-                arg = argi.__next__()
-                self._ensure_n_tokens(i)
+        last_was = None
+        for arg in args:
+            self._ensure_n_tokens(i)
 
-                if arg is TokenType.OPTIONAL:
-                    arg = argi.__next__()
-                    while self._tokens[i].is_a(arg):
-                        i = i + 1
-                        self._ensure_n_tokens(i)
-                elif self._tokens[i].is_a(arg):
+            if last_was is TokenType.OPTIONAL:
+                while self._tokens[i].is_a(arg):
+                    i = i + 1
+                    self._ensure_n_tokens(i)
+            elif arg is TokenType.OPTIONAL:
+                pass
+            elif hasattr(arg, '__iter__'):
+                if True in [self._tokens[i].is_a(t) for t in arg]:
                     taken.append(self._tokens[i])
                     i = i + 1
                 else:
                     return None
-        except StopIteration as e:
-            pass
+            elif self._tokens[i].is_a(arg):
+                taken.append(self._tokens[i])
+                i = i + 1
+            else:
+                return None
+            last_was = arg
+        if last_was is TokenType.OPTIONAL:
+            raise Exception("Dangling OPTIONAL in tokens_are()")
         for token in taken:
             output.append(token)
         self._tokens = self._tokens[i:]
