@@ -7,7 +7,7 @@ setup(
     package_dir={'expanding': 'expanding'},
     options={
         'build_exe': {
-            'packages': find_packages(exclude=['tests', 'example'])
+            'packages': find_packages(exclude=['tests', 'example', 'README.md'])
         }
     },
     url='https://github.com/kosmisk-dk/python-expanding-tokenizer',
