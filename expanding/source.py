@@ -98,7 +98,7 @@ class Reader(object):
             raise Exception("Unexpected EOF - dangling quote")
         if c in self._QUOTED:
             return self._QUOTED[c]
-        if c is 'u':
+        if c is 'u' or c is 'U':
             hexa = str(self.get()) + str(self.get()) + str(self.get()) + str(self.get())
             if len(hexa) is not 4:
                 raise Exception("Unexpected EOF - dangling quote")
