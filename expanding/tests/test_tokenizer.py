@@ -67,7 +67,7 @@ class TestTokenizer(TestCase):
         self.assertRaises(Exception, make_tokenizer('"fool').tokens_are, TokenType.TEXT)
 
     def test_whitespace_none(self):
-        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.NONE);
+        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.NONE)
         output = []
 
         self.assertTrue(tzr.tokens_are(TokenType.TEXT, output=output))
@@ -76,7 +76,7 @@ class TestTokenizer(TestCase):
         self.assertTrue(tzr.tokens_are(TokenType.TEXT, TokenType.EOF))
 
     def test_whitespace_newline(self):
-        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.NEWLINE);
+        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.NEWLINE)
         output = []
         self.assertTrue(tzr.tokens_are(TokenType.NEWLINE, TokenType.TEXT, output=output))
         self.assertEqual(2, len(output))
@@ -84,37 +84,37 @@ class TestTokenizer(TestCase):
         self.assertTrue(tzr.tokens_are(TokenType.TEXT, TokenType.EOF))
 
     def test_whitespace_newline_match_optional_whitespace(self):
-        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.NEWLINE);
+        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.NEWLINE)
         output = []
-        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL_WHITESPACE, TokenType.TEXT, output=output))
+        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL, TokenType.ANY_WHITESPACE, TokenType.TEXT, output=output))
         self.assertEqual(1, len(output))
         self.assertEqual("foo", output[0].content())
         self.assertTrue(tzr.tokens_are(TokenType.TEXT, TokenType.EOF))
 
     def test_whitespace_whitespace(self):
-        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.WHITESPACE);
+        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.WHITESPACE)
         output = []
         self.assertFalse(tzr.tokens_are(TokenType.NEWLINE, TokenType.TEXT, output=output))
         self.assertTrue(tzr.tokens_are(TokenType.WHITESPACE, TokenType.TEXT, output=output))
         self.assertEqual(2, len(output))
         self.assertEqual("foo", output[1].content())
-        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL_WHITESPACE, TokenType.TEXT, TokenType.EOF))
+        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL, TokenType.WHITESPACE, TokenType.TEXT, TokenType.EOF))
 
     def test_whitespace_both(self):
-        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.BOTH);
+        tzr = make_tokenizer("  \n   foo bar", whitespace=TokenWhitespace.BOTH)
         output = []
         self.assertFalse(tzr.tokens_are(TokenType.NEWLINE, TokenType.TEXT, output=output))
         self.assertTrue(tzr.tokens_are(TokenType.WHITESPACE, TokenType.NEWLINE, TokenType.WHITESPACE, TokenType.TEXT, output=output))
         self.assertEqual(4, len(output))
         self.assertEqual("foo", output[3].content())
-        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL_WHITESPACE, TokenType.TEXT, TokenType.EOF))
+        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL,TokenType.ANY_WHITESPACE, TokenType.TEXT, TokenType.EOF))
 
     def test_whitespace_both_optional(self):
-        tzr = make_tokenizer("  \n   foo'bar'", whitespace=TokenWhitespace.BOTH);
+        tzr = make_tokenizer("  \n   foo'bar'", whitespace=TokenWhitespace.BOTH)
         output = []
-        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL_WHITESPACE, TokenType.TEXT, output=output))
+        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL, TokenType.ANY_WHITESPACE, TokenType.TEXT, output=output))
         self.assertEqual(1, len(output))
         self.assertEqual("foo", output[0].content())
-        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL_WHITESPACE, TokenType.TEXT, TokenType.EOF))
+        self.assertTrue(tzr.tokens_are(TokenType.OPTIONAL, TokenType.ANY_WHITESPACE, TokenType.TEXT, TokenType.EOF))
 
 

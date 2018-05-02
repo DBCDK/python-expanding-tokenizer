@@ -1,5 +1,4 @@
 import re
-from distutils.command.config import config
 from enum import Enum
 from io import StringIO
 from typing import TypeVar, List
@@ -15,7 +14,7 @@ Type of token
 
 Some are synthetic (groups) ie. matches multiple base tokens
 Some are synthetic (content) ie. matches TEXT with certain properties (single word / number)
-Some are matchers (OPTIONAL_*) ie. matches a list of a certain type
+Some are matchers (OPTIONAL) ie. matches a list of next type
     """
     # Could be produced synthetically, but then completion is missing
     TEXT = 'TEXT'
@@ -50,8 +49,7 @@ Some are matchers (OPTIONAL_*) ie. matches a list of a certain type
     EOL = 'EOL'  # Synthetic: EOF or NEWLINE
     ANY_WHITESPACE = 'ANY_WHITESPACE'  # Synthetic: whitespace or newline
     ANY = 'ANY'  # Synthetic: wildcard
-    OPTIONAL_SPACE = 'OPTIONAL_SPACE'  # Matches 0-n whitespace, not outputed
-    OPTIONAL_WHITESPACE = 'OPTIONAL_WHITESPACE'  # Matches 0-n whitespace or newline, not outputed
+    OPTIONAL = 'OPTIONAL'  # Matches 0-n of next type, not outputed
 
 
 class TokenWhitespace(Enum):
@@ -241,35 +239,32 @@ Primary purpose of this package is
         """
         taken = []
         i = 0
-        for arg in args:
-            # print("match:", arg)
+        argi = iter(args)
+        try:
             while True:
-                while len(self._tokens) == i:
-                    self._next_token()
-                if arg is TokenType.OPTIONAL_SPACE:
-                    if self._tokens[i].is_a(TokenType.WHITESPACE):
-                        # print("space:", str(self._tokens[i]))
+                arg = argi.__next__()
+                self._ensure_n_tokens(i)
+
+                if arg is TokenType.OPTIONAL:
+                    arg = argi.__next__()
+                    while self._tokens[i].is_a(arg):
                         i = i + 1
-                        continue
-                elif arg is TokenType.OPTIONAL_WHITESPACE:
-                    if self._tokens[i].is_a(TokenType.ANY_WHITESPACE):
-                        # print("whitespace:", str(self._tokens[i]))
-                        i = i + 1
-                        continue
-                elif not self._tokens[i].is_a(arg):
-                    # print("not", str(self._tokens[i]))
-                    return None
-                else:
-                    # print("ok", str(self._tokens[i]))
+                        self._ensure_n_tokens(i)
+                elif self._tokens[i].is_a(arg):
                     taken.append(self._tokens[i])
                     i = i + 1
-                break
-        # print([str(t) for t in taken])
-
+                else:
+                    return None
+        except StopIteration as e:
+            pass
         for token in taken:
             output.append(token)
         self._tokens = self._tokens[i:]
         return output
+
+    def _ensure_n_tokens(self, n: int) -> None:
+        while len(self._tokens) <= n:
+            self._next_token()
 
     def _next_token(self) -> None:
         """
