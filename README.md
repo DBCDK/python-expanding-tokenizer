@@ -70,7 +70,7 @@ Helper functions for reading configfiles with environment variable expansion
 
 ## Example code for parsing a simple `.ini` file
 
-[Example](example/)
+[Example](https://github.com/kosmisk-dk/python-expanding-tokenizer/tree/master/expanding/example)
 
 ## License
 
