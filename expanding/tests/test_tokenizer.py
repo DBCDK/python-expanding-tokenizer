@@ -54,6 +54,7 @@ class TestTokenizer(TestCase):
         tokenizer = make_tokenizer('')
         self.assertTrue(tokenizer.tokens_are(TokenType.EOF))
         self.assertTrue(tokenizer.tokens_are(TokenType.EOF))
+        self.assertTrue(tokenizer.is_eof())
 
     def test_tokens_are_section_and_comment(self):
         output = []

@@ -269,6 +269,15 @@ Primary purpose of this package is
         self._tokens = self._tokens[i:]
         return output
 
+    def is_eof(self):
+        """
+        Test for end of file in input
+
+        :return: if eof has been reached
+        """
+        self._ensure_n_tokens(1)
+        return self._tokens[0].is_a(TokenType.EOF)
+
     def _ensure_n_tokens(self, n: int) -> None:
         while len(self._tokens) <= n:
             self._next_token()
