@@ -11,7 +11,7 @@ while not tokenizer.is_eof():
     token = []
     if tokenizer.tokens_are(T.NEWLINE):
         pass
-    elif tokenizer.tokens_are(T.SECTION,
+    elif tokenizer.tokens_are(T.SECTION, T.EOL,
                               output=token):
         section = token[0].content()
     elif tokenizer.tokens_are(T.WORD, T.EQ, T.TEXT, T.EOL,
