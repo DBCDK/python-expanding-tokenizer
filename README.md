@@ -74,4 +74,4 @@ Helper functions for reading configfiles with environment variable expansion
 
 ## License
 
-License is [GPL-v3](https://www.gnu.org/licenses/gpl-3.0.txt])
+License is [GPL-v3](https://www.gnu.org/licenses/gpl-3.0.txt)
