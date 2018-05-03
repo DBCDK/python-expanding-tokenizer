@@ -8,23 +8,23 @@ data = {}
 section = ""
 
 while not tokenizer.is_eof():
-    output = []
+    token = []
     if tokenizer.tokens_are(T.NEWLINE):
         pass
     elif tokenizer.tokens_are(T.SECTION,
-                              output=output):
-        section = output[0].content()
+                              output=token):
+        section = token[0].content()
     elif tokenizer.tokens_are(T.WORD, T.EQ, T.TEXT, T.EOL,
-                              output=output):
-        key = output[0].content()
-        value = output[2].content()
+                              output=token):
+        key = token[0].content()
+        value = token[2].content()
         if section not in data:
             data[section] = {}
         if key in data[section]:
-            raise SyntaxError("In section `%s' variable `%s' is already set at: %s" % (section, key, output[0].at()))
+            raise SyntaxError("In section `%s' variable `%s' is already set at: %s" % (section, key, token[0].at()))
         data[section][key] = value
     else:
-        token = tokenizer.peek_token()
-        raise SyntaxError("Unexpected input: `%s' at: %s" % (token.content(), token.at()))
+        unexpected = tokenizer.peek_token()
+        raise SyntaxError("Unexpected input: `%s' at: %s" % (unexpected.content(), unexpected.at()))
 
 print(json.dumps(data, indent=4, sort_keys=True))
