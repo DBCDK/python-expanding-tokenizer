@@ -278,6 +278,14 @@ Primary purpose of this package is
         self._ensure_n_tokens(1)
         return self._tokens[0].is_a(TokenType.EOF)
 
+    def has_more(self):
+        """
+        Test for end of file in input
+
+        :return: if eof has not been reached
+        """
+        return not self.is_eof()
+
     def _ensure_n_tokens(self, n: int) -> None:
         while len(self._tokens) <= n:
             self._next_token()

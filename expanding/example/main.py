@@ -7,7 +7,7 @@ tokenizer = Tokenizer.ini_from_file("config.ini")
 data = {}
 section = ""
 
-while not tokenizer.is_eof():
+while tokenizer.has_more():
     token = []
     if tokenizer.tokens_are(T.NEWLINE):
         pass
