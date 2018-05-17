@@ -25,7 +25,7 @@ Helper functions for reading configfiles with environment variable expansion
   * **WHITESPACE** which turns all blocks of whitespace into tokens (including newlines)
   * **BOTH** which turns all whichspace blocks into tokens, but newlines into separate tokens
   The business interface for eht *Tokenizer* is:
-    * is_eof() - which tells if there's more tokens to read
+    * is_eof()/has_more() - which tells if there's more tokens to read
     * peek_token() - look at the next token. Usefull for error reporting
     * tokens_are() - which takes a list of token-types or list-of token-type (meaning any any of these), and an optional
       `output=[]`. If the next tokens match the list, output has the matched *Token*s appended, and the same variable is
