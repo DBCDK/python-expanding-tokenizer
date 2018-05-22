@@ -228,7 +228,7 @@ Primary purpose of this package is
             self._next_token()
         return self._tokens[0]
 
-    def tokens_are(self, *args: TypeVar('_TokenType', TokenType, List[TokenType]), output: List[Token] = []) -> List[Token]:
+    def tokens_are(self, *args: TypeVar('_TokenType', TokenType, List[TokenType]), output: List[Token] = None) -> List[Token]:
         """
         Match the inut for a list of tokens.
 
@@ -238,6 +238,8 @@ Primary purpose of this package is
                        (only put is entire token list matches)
         :returns: sane as output or None if no match is made
         """
+        if output is None:
+            output = []
         taken = []
         i = 0
         last_was = None
