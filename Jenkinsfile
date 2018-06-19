@@ -14,6 +14,14 @@ pipeline {
         stage("build") {
             steps {
                 script {
+                    if (! env.BRANCH_NAME) {
+                        currentBuild.rawBuild.result = Result.ABORTED
+                        throw new hudson.AbortException('Job Started from non MultiBranch Build')
+                    } else {
+                        println(" Building BRANCH_NAME == ${BRANCH_NAME}")
+                    }
+                }
+                script {
                     sh """
                         rm -rf dist deb_dist expanding?tokenizer*
                         python3 setup.py --no-user-cfg --command-packages=stdeb.command sdist_dsc --debian-version=${BUILD_NUMBER}kosmisk --verbose --copyright-file copyright.txt -z stable
