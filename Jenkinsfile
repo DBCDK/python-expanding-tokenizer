@@ -34,10 +34,10 @@ pipeline {
             steps {
                 script {
                     if (env.BRANCH_NAME ==~ /master/) {
-                        sh """
+                        sh '''
                             echo UPLOADING
-                        	set -x ; cd deb_dist && for changes in *.changes; do rsync -av \$changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,\$d' -e 's/.* //' $changes` ${RSYNC_TARGET}; done
-                        """
+                        	set -x ; cd deb_dist && for changes in *.changes; do rsync -av $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}; done
+                        '''
                     } else {
                         sh """
                             echo NOT UPLOADING
