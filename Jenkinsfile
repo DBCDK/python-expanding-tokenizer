@@ -8,7 +8,6 @@ pipeline {
         timestamps()
     }
     environment {
-        RSYNC_SSH    = credentials('kosmisk-dk-rsync-ssh')
         RSYNC_TARGET = credentials('kosmisk-dk-rsync-target-stretch')
     }
     stages {
@@ -30,7 +29,7 @@ pipeline {
                         sh """
                         	cd deb_dist
                             for changes in *.changes; do
-                                rsync -av ${env.RSYNC_SSH} $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${env.RSYNC_TARGET}
+                                rsync -av $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}
                             done
                         """
                     }
