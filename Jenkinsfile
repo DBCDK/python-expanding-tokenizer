@@ -33,12 +33,12 @@ pipeline {
         stage("upload") {
             steps {
                 script {
-//                    if (env.BRANCH_NAME == "master") {
+                    if (env.BRANCH_NAME == "master") {
                         sh """
                             set -x
-                        	cd deb_dist && for changes in *.changes; do rsync -av $$changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$$d' -e 's/.* //' $$changes` ${RSYNC_TARGET}; done
+                        	cd deb_dist && for changes in *.changes; do rsync -av \$changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,\$d' -e 's/.* //' $changes` ${RSYNC_TARGET}; done
                         """
-//                    }
+                    }
                 }
             }
         }
