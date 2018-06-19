@@ -36,7 +36,7 @@ pipeline {
                     if (env.BRANCH_NAME ==~ /master/) {
                         sh '''
                             echo UPLOADING
-                        	set -x ; cd deb_dist && for changes in *.changes; do rsync -av $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}; done
+                        	set -x ; cd deb_dist && for changes in *amd64.changes; do rsync -av $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}; done
                         '''
                     } else {
                         sh """
