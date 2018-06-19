@@ -7,6 +7,10 @@ pipeline {
         buildDiscarder(logRotator(artifactDaysToKeepStr: "", artifactNumToKeepStr: "", daysToKeepStr: "30", numToKeepStr: "30"))
         timestamps()
     }
+    environment {
+        RSYNC_SSH    = crecentials('kosmisk-dk-rsync-ssh')
+        RSYNC_TARGET = crecentials('kosmisk-dk-rsync-target-stretch')
+    }
     stages {
         stage("build") {
             steps {
@@ -24,11 +28,10 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME ==~ /master|trunk/) {
                         sh """
-                            find .
-                        	#cd deb_dist && \
-                        	#for changes in *.changes; do \
-                            #    rsync -av $RSYNC_SSH $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` $RSYNC_TARGET; \
-                            #done
+                        	cd deb_dist
+                            for changes in *.changes; do
+                                rsync -av ${RSYNC_SSH} $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}
+                            done
                         """
                     }
 
