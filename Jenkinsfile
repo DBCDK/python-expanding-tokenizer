@@ -25,7 +25,7 @@ pipeline {
                     sh """
                         rm -rf dist deb_dist expanding?tokenizer*
                         python3 setup.py --no-user-cfg --command-packages=stdeb.command sdist_dsc --debian-version=${BUILD_NUMBER}kosmisk --verbose --copyright-file copyright.txt -z stable
-                        (cd deb_dist/ && rm -f *)
+                        rm -f deb_dist/*.changes
                         (cd deb_dist/*/ && debuild -us -uc -b)
                     """
                 }
@@ -36,13 +36,8 @@ pipeline {
                 script {
                     if (env.BRANCH_NAME ==~ /master/) {
                         sh '''
-                            echo UPLOADING
                         	cd deb_dist && for changes in *.changes; do rsync -av $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}; done
                         '''
-                    } else {
-                        sh """
-                            echo NOT UPLOADING
-                        """
                     }
                 }
             }
