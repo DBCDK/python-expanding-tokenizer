@@ -30,7 +30,7 @@ pipeline {
                         sh """
                         	cd deb_dist
                             for changes in *.changes; do
-                                rsync -av ${RSYNC_SSH} $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${RSYNC_TARGET}
+                                rsync -av ${env.RSYNC_SSH} $changes `sed -e '1,/^Files:/d' -e '/^[A-Z]/,$d' -e 's/.* //' $changes` ${env.RSYNC_TARGET}
                             done
                         """
                     }
