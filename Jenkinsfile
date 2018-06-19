@@ -8,8 +8,8 @@ pipeline {
         timestamps()
     }
     environment {
-        RSYNC_SSH    = crecentials('kosmisk-dk-rsync-ssh')
-        RSYNC_TARGET = crecentials('kosmisk-dk-rsync-target-stretch')
+        RSYNC_SSH    = credentials('kosmisk-dk-rsync-ssh')
+        RSYNC_TARGET = credentials('kosmisk-dk-rsync-target-stretch')
     }
     stages {
         stage("build") {
