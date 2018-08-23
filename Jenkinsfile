@@ -8,7 +8,7 @@ pipeline {
         timestamps()
     }
     environment {
-        RSYNC_TARGET = credentials('kosmisk-dk-rsync-target-stretch')
+        RSYNC_TARGET = credentials('debian-rsync-stretch')
     }
     stages {
         stage("build") {
@@ -24,7 +24,7 @@ pipeline {
                 script {
                     sh """
                         rm -rf dist deb_dist expanding?tokenizer*
-                        python3 setup.py --no-user-cfg --command-packages=stdeb.command sdist_dsc --debian-version=${BUILD_NUMBER}kosmisk --verbose --copyright-file copyright.txt -z stable
+                        python3 setup.py --no-user-cfg --command-packages=stdeb.command sdist_dsc --debian-version=${BUILD_NUMBER}dbc --verbose --copyright-file copyright.txt -z stable
                         rm -f deb_dist/*.changes
                         (cd deb_dist/*/ && debuild -us -uc -b)
                     """
